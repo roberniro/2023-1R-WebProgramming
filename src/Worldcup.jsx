@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import p01 from "./assets/박수진.jpg";
 import p02 from "./assets/신민아.jpg";
 import p03 from "./assets/신세경.jpg";
@@ -14,7 +15,6 @@ import p13 from "./assets/권나라.jpg";
 import p14 from "./assets/김희선.jpg";
 import p15 from "./assets/문채원.jpg";
 import p16 from "./assets/배수지.jpg";
-import { useEffect, useState } from "react";
 
 function Worldcup() {
   const candidate = [
@@ -35,11 +35,15 @@ function Worldcup() {
     { name: "문채원", src: p15 },
     { name: "배수지", src: p16 }
   ];
+  const studentID = "2017112288"; // 학번
 
   const [game, setGame] = useState([]);
   const [round, setRound] = useState(0);
   const [nextGame, setNextGame] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null); // 선택된 항목 상태 추가
+  const [stat, setStat] = useState(() => {
+    const savedStat = localStorage.getItem(studentID);
+    return savedStat ? JSON.parse(savedStat) : {};
+  });
 
   useEffect(() => {
     setGame(
@@ -62,52 +66,49 @@ function Worldcup() {
   }, [round]);
 
   useEffect(() => {
-    // 3초 후에 선택된 항목 초기화
-    const timeout = setTimeout(() => {
-      setSelectedItem(null);
-    }, 3000);
+    localStorage.setItem(studentID, JSON.stringify(stat));
+  }, [stat, studentID]);
 
-    return () => clearTimeout(timeout); // cleanup 함수를 사용하여 타임아웃 클리어
-  }, [selectedItem]);
+  const leftFunction = () => {
+    setStat((prevStat) => ({
+      ...prevStat,
+      [game[left].name]: (prevStat[game[left].name] || 0) + 1
+    }));
+    setNextGame((prev) => prev.concat(game[left]));
+    setRound((prevRound) => prevRound + 1);
+  };
 
-  const handleItemClick = (index) => {
-    // 항목을 클릭하면 선택된 항목 설정
-    const selectedItem = game[round * 2 + index];
-    setSelectedItem(selectedItem);
-    setNextGame((prev) => prev.concat(selectedItem));
-    setRound((round) => round + 1);
+  const rightFunction = () => {
+    setStat((prevStat) => ({
+      ...prevStat,
+      [game[right].name]: (prevStat[game[right].name] || 0) + 1
+    }));
+    setNextGame((prev) => prev.concat(game[right]));
+    setRound((prevRound) => prevRound + 1);
   };
 
   if (game.length === 1) {
     return (
       <div>
         <p>이상형 월드컵 우승</p>
-        <div
+        <img
+          src={game[0].src}
+          alt={game[0].name}
           style={{
-            position: "relative",
-            display: "inline-block"
+            width: "300px",
+            height: "300px"
           }}
-        >
-          <img
-            src={game[0].src}
-            alt={game[0].name}
-            style={{ width: "300px", height: "300px" }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: "rgba(0, 0, 0, 0.5)",
-              color: "#fff",
-              padding: "10px",
-              textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)"
-            }}
-          >
-            {game[0].name}
-          </div>
-        </div>
+        />
+        <p>{game[0].name}</p>
+        <p>{stat[game[0].name]} 번 승리</p>
+        <table>
+          {Object.entries(stat).map(([name, count]) => (
+            <tr key={name}>
+              <td>{name}</td>
+              <td>{count}</td>
+            </tr>
+          ))}
+        </table>
       </div>
     );
   }
@@ -115,90 +116,35 @@ function Worldcup() {
   if (game.length === 0 || round + 1 > game.length / 2)
     return <p>로딩중입니다</p>;
 
+  const left = round * 2;
+  const right = round * 2 + 1;
+
   return (
     <div>
       <p>
-        이상형 월드컵 {round + 1} / {game.length / 2}{" "}
+        {studentID}이상형 월드컵 {round + 1} / {game.length / 2}{" "}
         <b>{game.length === 2 ? "결승" : `${game.length}강`}</b>
       </p>
       <div style={{ display: "flex", flexDirection: "row" }}>
-        <div
+        <img
           style={{
-            position: "relative",
-            display: "inline-block",
-            marginRight: "10px"
+            width: "300px",
+            height: "300px"
           }}
-        >
-          <img
-            src={game[round * 2].src}
-            alt={game[round * 2].name}
-            onClick={() => handleItemClick(0)}
-            style={{
-              cursor: "pointer",
-              width: "300px",
-              height: "300px"
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: "rgba(0, 0, 0, 0.5)",
-              color: "#fff",
-              padding: "10px",
-              textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)"
-            }}
-          >
-            {game[round * 2].name}
-          </div>
-        </div>
-        <div
+          src={game[left].src}
+          alt={game[left].name}
+          onClick={leftFunction}
+        />
+        <img
           style={{
-            position: "relative",
-            display: "inline-block"
+            width: "300px",
+            height: "300px"
           }}
-        >
-          <img
-            src={game[round * 2 + 1].src}
-            alt={game[round * 2 + 1].name}
-            onClick={() => handleItemClick(1)}
-            style={{
-              cursor: "pointer",
-              width: "300px",
-              height: "300px"
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              background: "rgba(0, 0, 0, 0.5)",
-              color: "#fff",
-              padding: "10px",
-              textShadow: "2px 2px 4px rgba(0, 0, 0, 0.8)"
-            }}
-          >
-            {game[round * 2 + 1].name}
-          </div>
-        </div>
+          src={game[right].src}
+          alt={game[right].name}
+          onClick={rightFunction}
+        />
       </div>
-      {selectedItem && (
-        <div>
-          <p>선택한 항목: {selectedItem.name}</p>
-          <img
-            src={selectedItem.src}
-            alt={selectedItem.name}
-            style={{
-              width: "200px",
-              height: "200px"
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }
